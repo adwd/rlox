@@ -1,35 +1,64 @@
-use vm::VM;
-
-use crate::chunk::{op_code::*, Chunk};
-
 mod chunk;
+mod compiler;
 mod debug;
+mod scanner;
 mod value;
 mod vm;
 
+use crate::chunk::Chunk;
+use crate::vm::InterpretResult;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::{self, BufRead};
+use vm::VM;
+
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+
+    match args.len() {
+        1 => repl(),
+        2 => run_file(&args[1]),
+        _ => {
+            eprintln!("Usage: clox [path]");
+            std::process::exit(64);
+        }
+    }
+}
+
+fn repl() {
+    let stdin = io::stdin();
     let mut vm = VM::new(Chunk::new());
-    let mut chunk = Chunk::new();
 
-    let position = chunk.add_constant(12.3);
-    chunk.write(OP_CONSTANT, 123);
-    chunk.write(OP_NEGATE, 123);
+    loop {
+        print!("> ");
+        io::stdout().flush().unwrap();
 
-    chunk.write(position, 123);
+        let mut line = String::new();
+        stdin.lock().read_line(&mut line).unwrap();
 
-    let position = chunk.add_constant(4.56);
-    chunk.write(OP_CONSTANT, 124);
-    chunk.write(position, 124);
+        let result = vm.interpret(line);
+        match result {
+            InterpretResult::CompileError => std::process::exit(65),
+            InterpretResult::RuntimeError => std::process::exit(70),
+            _ => (),
+        }
+    }
+}
 
-    chunk.write(OP_SUBTRACT, 125);
+fn read_file(path: &str) -> String {
+    let mut file = File::open(path).unwrap();
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).unwrap();
+    contents
+}
 
-    let position = chunk.add_constant(7.89);
-    chunk.write(OP_CONSTANT, 125);
-    chunk.write(position, 125);
-
-    chunk.write(OP_DIVIDE, 126);
-
-    chunk.write(OP_RETURN, 127);
-    // disassemble_chunk(&chunk, "test chunk");
-    vm.interpret(chunk);
+fn run_file(path: &str) {
+    let source = read_file(path);
+    let mut vm = VM::new(Chunk::new());
+    let result = vm.interpret(source);
+    match result {
+        InterpretResult::CompileError => std::process::exit(65),
+        InterpretResult::RuntimeError => std::process::exit(70),
+        _ => (),
+    }
 }
