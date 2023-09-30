@@ -1,8 +1,5 @@
 use crate::{
-    chunk::{
-        op_code::{OP_CONSTANT, OP_NEGATE, OP_RETURN},
-        Chunk,
-    },
+    chunk::{op_code::*, Chunk},
     debug::disassemble_instruction,
     value::{print_value, Value},
 };
@@ -58,6 +55,10 @@ impl VM {
                     print_value(&value);
                     println!();
                 }
+                OP_ADD => self.binary_op(|a, b| a + b),
+                OP_SUBTRACT => self.binary_op(|a, b| a - b),
+                OP_MULTIPLY => self.binary_op(|a, b| a * b),
+                OP_DIVIDE => self.binary_op(|a, b| a / b),
                 OP_NEGATE => {
                     let value = -self.pop();
                     self.push(value);
@@ -92,5 +93,11 @@ impl VM {
 
     fn pop(&mut self) -> Value {
         self.stack.pop().unwrap()
+    }
+
+    fn binary_op(&mut self, op: impl FnOnce(Value, Value) -> Value) {
+        let b = self.pop();
+        let a = self.pop();
+        self.push(op(a, b));
     }
 }

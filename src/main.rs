@@ -21,7 +21,15 @@ fn main() {
     chunk.write(OP_CONSTANT, 124);
     chunk.write(position, 124);
 
-    chunk.write(OP_RETURN, 125);
+    chunk.write(OP_SUBTRACT, 125);
+
+    let position = chunk.add_constant(7.89);
+    chunk.write(OP_CONSTANT, 125);
+    chunk.write(position, 125);
+
+    chunk.write(OP_DIVIDE, 126);
+
+    chunk.write(OP_RETURN, 127);
     // disassemble_chunk(&chunk, "test chunk");
     vm.interpret(chunk);
 }
