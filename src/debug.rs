@@ -22,6 +22,7 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
 
     match chunk.code[offset] {
         OP_CONSTANT => constant_instruction("OP_CONSTANT", chunk, offset),
+        OP_NEGATE => simple_instruction("OP_NEGATE", offset),
         OP_RETURN => simple_instruction("OP_RETURN", offset),
         unknown_opcode => {
             println!("Unknown opcode {}", unknown_opcode);

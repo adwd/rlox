@@ -2,7 +2,8 @@ use crate::value::{Value, ValueArray};
 
 pub mod op_code {
     pub const OP_CONSTANT: u8 = 0;
-    pub const OP_RETURN: u8 = 1;
+    pub const OP_NEGATE: u8 = 1;
+    pub const OP_RETURN: u8 = 2;
 }
 
 #[derive(Debug)]

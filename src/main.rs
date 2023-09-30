@@ -13,6 +13,8 @@ fn main() {
 
     let position = chunk.add_constant(12.3);
     chunk.write(OP_CONSTANT, 123);
+    chunk.write(OP_NEGATE, 123);
+
     chunk.write(position, 123);
 
     let position = chunk.add_constant(4.56);

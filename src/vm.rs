@@ -1,6 +1,6 @@
 use crate::{
     chunk::{
-        op_code::{OP_CONSTANT, OP_RETURN},
+        op_code::{OP_CONSTANT, OP_NEGATE, OP_RETURN},
         Chunk,
     },
     debug::disassemble_instruction,
@@ -57,6 +57,10 @@ impl VM {
                     self.push(value);
                     print_value(&value);
                     println!();
+                }
+                OP_NEGATE => {
+                    let value = -self.pop();
+                    self.push(value);
                 }
                 OP_RETURN => {
                     print_value(&self.pop());
