@@ -12,7 +12,7 @@ pub fn disassemble_chunk(chunk: &Chunk, name: &str) {
     }
 }
 
-fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
+pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     print!("{:04} ", offset);
     if offset > 0 && chunk.lines[offset] == chunk.lines[offset - 1] {
         print!("   | ")
@@ -31,8 +31,9 @@ fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
 }
 
 fn constant_instruction(name: &str, chunk: &Chunk, offset: usize) -> usize {
-    print!("{:<16} {:>4} '", name, offset);
-    print_value(&chunk.constants.values[offset as usize]);
+    let constant = chunk.code[offset + 1];
+    print!("{:<16} {:>4} '", name, constant);
+    print_value(&chunk.constants.values[constant as usize]);
     println!("'");
     offset + 2
 }

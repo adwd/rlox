@@ -5,6 +5,7 @@ pub mod op_code {
     pub const OP_RETURN: u8 = 1;
 }
 
+#[derive(Debug)]
 pub struct Chunk {
     pub code: Vec<u8>,
     pub lines: Vec<usize>,
