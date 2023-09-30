@@ -9,8 +9,9 @@ use crate::{
 
 #[derive(Debug)]
 pub struct VM {
-    pub chunk: Chunk,
-    pub ip: usize,
+    chunk: Chunk,
+    ip: usize,
+    stack: Vec<Value>,
 }
 
 pub enum InterpretResult {
@@ -21,7 +22,11 @@ pub enum InterpretResult {
 
 impl VM {
     pub fn new(chunk: Chunk) -> VM {
-        VM { chunk, ip: 0 }
+        VM {
+            chunk,
+            ip: 0,
+            stack: vec![],
+        }
     }
 
     pub fn interpret(&mut self, chunk: Chunk) -> InterpretResult {
@@ -35,6 +40,13 @@ impl VM {
 
         loop {
             if cfg!(debug_assertions) {
+                print!("          ");
+                for slot in self.stack.iter() {
+                    print!("[ ");
+                    print_value(slot);
+                    print!(" ]");
+                }
+                println!();
                 disassemble_instruction(&self.chunk, self.ip);
             }
             let instruction = self.read_byte();
@@ -42,10 +54,13 @@ impl VM {
             match instruction {
                 OP_CONSTANT => {
                     let value = self.read_constant();
+                    self.push(value);
                     print_value(&value);
                     println!();
                 }
                 OP_RETURN => {
+                    print_value(&self.pop());
+                    println!();
                     return InterpretResult::Ok;
                 }
                 unknown_opcode => {
@@ -65,5 +80,13 @@ impl VM {
     fn read_constant(&mut self) -> Value {
         let position = self.read_byte();
         self.chunk.constants.values[position as usize]
+    }
+
+    fn push(&mut self, value: Value) {
+        self.stack.push(value);
+    }
+
+    fn pop(&mut self) -> Value {
+        self.stack.pop().unwrap()
     }
 }
