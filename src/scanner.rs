@@ -1,6 +1,6 @@
 use derive_more::Display;
 
-#[derive(PartialEq, Eq, Debug, Display)]
+#[derive(PartialEq, Eq, Debug, Display, Clone)]
 pub enum TokenType {
     // Single-character tokens.
     LeftParen,
@@ -49,6 +49,7 @@ pub enum TokenType {
     Eof,
 }
 
+#[derive(Debug, Clone)]
 pub struct Token<'a> {
     pub token_type: TokenType,
     pub lexeme: &'a str,

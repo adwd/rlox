@@ -28,11 +28,13 @@ impl VM {
     }
 
     pub fn interpret(&mut self, source: String) -> InterpretResult {
-        // self.chunk = chunk;
-        // self.ip = 0;
-        // self.run()
-        compile(source);
-        InterpretResult::Ok
+        if !compile(source, /* self.chunk */ Chunk::new()) {
+            return InterpretResult::CompileError;
+        }
+
+        self.ip = 0; // ??
+
+        self.run()
     }
 
     fn run(&mut self) -> InterpretResult {
