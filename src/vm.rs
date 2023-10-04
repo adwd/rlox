@@ -28,11 +28,14 @@ impl VM {
     }
 
     pub fn interpret(&mut self, source: String) -> InterpretResult {
-        // self.chunk = chunk;
-        // self.ip = 0;
-        // self.run()
-        compile(source);
-        InterpretResult::Ok
+        let Some(chunk) = compile(source) else {
+            return InterpretResult::CompileError;
+        };
+
+        self.chunk = chunk;
+        self.ip = 0;
+
+        self.run()
     }
 
     fn run(&mut self) -> InterpretResult {
