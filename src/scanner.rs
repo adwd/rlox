@@ -49,9 +49,9 @@ pub enum TokenType {
     Eof,
 }
 
-pub struct Token<'a> {
+pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: &'a str,
+    pub lexeme: String,
     pub line: i32,
 }
 
@@ -80,15 +80,15 @@ impl Scanner {
     fn make_token(&self, token_type: TokenType) -> Token {
         Token {
             token_type,
-            lexeme: &self.source[self.start..self.current],
+            lexeme: self.source[self.start..self.current].to_owned(),
             line: self.line,
         }
     }
 
-    fn error_token<'a>(&'a self, message: &'a str) -> Token {
+    fn error_token(&self, message: &str) -> Token {
         Token {
             token_type: TokenType::Error,
-            lexeme: message,
+            lexeme: message.to_owned(),
             line: self.line,
         }
     }
@@ -204,14 +204,14 @@ impl Scanner {
         }
     }
 
-    fn identifier<'a>(&'a mut self) -> Token<'a> {
+    fn identifier(&mut self) -> Token {
         while is_alpha(self.peek()) || is_digit(self.peek()) {
             self.advance();
         }
         self.make_token(self.identifier_type())
     }
 
-    fn string<'a>(&'a mut self) -> Token<'a> {
+    fn string(&mut self) -> Token {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
@@ -228,7 +228,7 @@ impl Scanner {
         self.make_token(TokenType::String)
     }
 
-    fn number<'a>(&'a mut self) -> Token<'a> {
+    fn number(&mut self) -> Token {
         while is_digit(self.peek()) {
             self.advance();
         }
@@ -246,7 +246,7 @@ impl Scanner {
         self.make_token(TokenType::Number)
     }
 
-    pub fn scan_token<'a>(&'a mut self) -> Token<'a> {
+    pub fn scan_token(&mut self) -> Token {
         self.skip_whitespace();
         self.start = self.current;
 
