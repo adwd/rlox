@@ -1,7 +1,7 @@
 use std::cell::Cell;
 
 use crate::{
-    chunk::{op_code::*, Chunk},
+    chunk::{Chunk, OpCode::*},
     scanner::{Scanner, Token, TokenType},
     value::Value,
 };
@@ -121,7 +121,7 @@ impl Compiler {
     }
 
     fn emit_return(&mut self) {
-        self.emit_byte(OP_RETURN);
+        self.emit_byte(OP_RETURN as u8);
     }
 
     fn make_constant(&mut self, value: Value) -> u8 {
@@ -136,7 +136,7 @@ impl Compiler {
 
     fn emit_constant(&mut self, value: Value) {
         let constant = self.make_constant(value);
-        self.emit_bytes(OP_CONSTANT, constant);
+        self.emit_bytes(OP_CONSTANT as u8, constant);
     }
 
     fn parse_precedence(&mut self, precedence: Precedence) {
@@ -167,10 +167,10 @@ impl Compiler {
         self.parse_precedence(rule.precedence.next().unwrap());
 
         match operator_type {
-            TokenType::Plus => self.emit_byte(OP_ADD),
-            TokenType::Minus => self.emit_byte(OP_SUBTRACT),
-            TokenType::Star => self.emit_byte(OP_MULTIPLY),
-            TokenType::Slash => self.emit_byte(OP_DIVIDE),
+            TokenType::Plus => self.emit_byte(OP_ADD as u8),
+            TokenType::Minus => self.emit_byte(OP_SUBTRACT as u8),
+            TokenType::Star => self.emit_byte(OP_MULTIPLY as u8),
+            TokenType::Slash => self.emit_byte(OP_DIVIDE as u8),
             _ => unreachable!(),
         }
     }
@@ -191,7 +191,7 @@ impl Compiler {
         self.parse_precedence(Precedence::Unary);
 
         match operator_type {
-            TokenType::Minus => self.emit_byte(OP_NEGATE),
+            TokenType::Minus => self.emit_byte(OP_NEGATE as u8),
             _ => unreachable!(),
         }
     }

@@ -1,5 +1,8 @@
 use crate::{
-    chunk::{op_code::*, Chunk},
+    chunk::{
+        Chunk,
+        OpCode::{self, *},
+    },
     compiler::compile,
     debug::disassemble_instruction,
     value::{print_value, Value},
@@ -52,7 +55,7 @@ impl VM {
                 println!();
                 disassemble_instruction(&self.chunk, self.ip);
             }
-            let instruction = self.read_byte();
+            let instruction = self.read_byte::<OpCode>();
 
             match instruction {
                 OP_CONSTANT => {
@@ -75,21 +78,24 @@ impl VM {
                     return InterpretResult::Ok;
                 }
                 unknown_opcode => {
-                    println!("Unknown opcode {}", unknown_opcode);
+                    println!("Unknown opcode {:?}", unknown_opcode);
                     return InterpretResult::CompileError;
                 }
             }
         }
     }
 
-    fn read_byte(&mut self) -> u8 {
+    fn read_byte<T>(&mut self) -> T
+    where
+        T: From<u8>,
+    {
         let instruction = self.chunk.code[self.ip];
         self.ip += 1;
-        instruction
+        instruction.into()
     }
 
     fn read_constant(&mut self) -> Value {
-        let position = self.read_byte();
+        let position = self.read_byte::<u8>();
         self.chunk.constants.values[position as usize]
     }
 

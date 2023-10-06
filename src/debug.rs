@@ -1,5 +1,8 @@
 use crate::{
-    chunk::{op_code::*, Chunk},
+    chunk::{
+        Chunk,
+        OpCode::{self, *},
+    },
     value::print_value,
 };
 
@@ -20,7 +23,8 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
         print!("{:4} ", chunk.lines[offset])
     }
 
-    match chunk.code[offset] {
+    let code: OpCode = chunk.code[offset].into();
+    match code {
         OP_CONSTANT => constant_instruction("OP_CONSTANT", chunk, offset),
         OP_ADD => simple_instruction("OP_ADD", offset),
         OP_SUBTRACT => simple_instruction("OP_SUBTRACT", offset),
@@ -29,7 +33,7 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
         OP_NEGATE => simple_instruction("OP_NEGATE", offset),
         OP_RETURN => simple_instruction("OP_RETURN", offset),
         unknown_opcode => {
-            println!("Unknown opcode {}", unknown_opcode);
+            println!("Unknown opcode {:?}", unknown_opcode);
             offset + 1
         }
     }

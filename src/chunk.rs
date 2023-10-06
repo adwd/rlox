@@ -1,13 +1,34 @@
 use crate::value::{Value, ValueArray};
 
-pub mod op_code {
-    pub const OP_CONSTANT: u8 = 0;
-    pub const OP_NEGATE: u8 = 1;
-    pub const OP_ADD: u8 = 2;
-    pub const OP_SUBTRACT: u8 = 3;
-    pub const OP_MULTIPLY: u8 = 4;
-    pub const OP_DIVIDE: u8 = 5;
-    pub const OP_RETURN: u8 = 6;
+#[allow(non_camel_case_types)]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub enum OpCode {
+    OP_CONSTANT,
+    OP_ADD,
+    OP_SUBTRACT,
+    OP_MULTIPLY,
+    OP_DIVIDE,
+    OP_NEGATE,
+    OP_RETURN,
+
+    UNKNOWN,
+}
+
+impl From<u8> for OpCode {
+    fn from(from: u8) -> Self {
+        use self::OpCode::*;
+        match from {
+            0 => OP_CONSTANT,
+            1 => OP_ADD,
+            2 => OP_SUBTRACT,
+            3 => OP_MULTIPLY,
+            4 => OP_DIVIDE,
+            5 => OP_NEGATE,
+            6 => OP_RETURN,
+            _ => UNKNOWN,
+        }
+    }
 }
 
 #[derive(Debug)]
