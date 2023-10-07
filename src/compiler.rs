@@ -175,6 +175,15 @@ impl Compiler {
         }
     }
 
+    fn literal(&mut self) {
+        match self.previous.token_type {
+            TokenType::False => self.emit_byte(OP_FALSE as u8),
+            TokenType::Nil => self.emit_byte(OP_NIL as u8),
+            TokenType::True => self.emit_byte(OP_TRUE as u8),
+            _ => unreachable!(),
+        }
+    }
+
     fn grouping(&mut self) {
         self.expression();
         self.consume(TokenType::RightParen, "Expect ')' after expression.");
@@ -182,7 +191,7 @@ impl Compiler {
 
     fn number(&mut self) {
         let value = self.previous.lexeme.parse::<f64>().unwrap();
-        self.emit_constant(value);
+        self.emit_constant(Value::Number(value));
     }
 
     fn unary(&mut self) {
@@ -191,6 +200,7 @@ impl Compiler {
         self.parse_precedence(Precedence::Unary);
 
         match operator_type {
+            TokenType::Bang => self.emit_byte(OP_NOT as u8),
             TokenType::Minus => self.emit_byte(OP_NEGATE as u8),
             _ => unreachable!(),
         }
@@ -213,7 +223,7 @@ impl Compiler {
             TokenType::Semicolon => pr(None, None, Precedence::None),
             TokenType::Slash => pr(None, Some(parse_fn::binary), Precedence::Factor),
             TokenType::Star => pr(None, Some(parse_fn::binary), Precedence::Factor),
-            TokenType::Bang => pr(None, None, Precedence::None),
+            TokenType::Bang => pr(Some(parse_fn::unary), None, Precedence::None),
             TokenType::BangEqual => pr(None, None, Precedence::None),
             TokenType::Equal => pr(None, None, Precedence::None),
             TokenType::EqualEqual => pr(None, None, Precedence::None),
@@ -227,17 +237,17 @@ impl Compiler {
             TokenType::And => pr(None, None, Precedence::None),
             TokenType::Class => pr(None, None, Precedence::None),
             TokenType::Else => pr(None, None, Precedence::None),
-            TokenType::False => pr(None, None, Precedence::None),
+            TokenType::False => pr(Some(parse_fn::literal), None, Precedence::None),
             TokenType::For => pr(None, None, Precedence::None),
             TokenType::Fun => pr(None, None, Precedence::None),
             TokenType::If => pr(None, None, Precedence::None),
-            TokenType::Nil => pr(None, None, Precedence::None),
+            TokenType::Nil => pr(Some(parse_fn::literal), None, Precedence::None),
             TokenType::Or => pr(None, None, Precedence::None),
             TokenType::Print => pr(None, None, Precedence::None),
             TokenType::Return => pr(None, None, Precedence::None),
             TokenType::Super => pr(None, None, Precedence::None),
             TokenType::This => pr(None, None, Precedence::None),
-            TokenType::True => pr(None, None, Precedence::None),
+            TokenType::True => pr(Some(parse_fn::literal), None, Precedence::None),
             TokenType::Var => pr(None, None, Precedence::None),
             TokenType::While => pr(None, None, Precedence::None),
             TokenType::Error => pr(None, None, Precedence::None),
@@ -263,6 +273,10 @@ mod parse_fn {
 
     pub fn unary(compiler: &mut Compiler) {
         compiler.unary();
+    }
+
+    pub fn literal(compiler: &mut Compiler) {
+        compiler.literal();
     }
 }
 

@@ -26,10 +26,14 @@ pub fn disassemble_instruction(chunk: &Chunk, offset: usize) -> usize {
     let code: OpCode = chunk.code[offset].into();
     match code {
         OP_CONSTANT => constant_instruction("OP_CONSTANT", chunk, offset),
+        OP_NIL => simple_instruction("OP_NIL", offset),
+        OP_TRUE => simple_instruction("OP_TRUE", offset),
+        OP_FALSE => simple_instruction("OP_FALSE", offset),
         OP_ADD => simple_instruction("OP_ADD", offset),
         OP_SUBTRACT => simple_instruction("OP_SUBTRACT", offset),
         OP_MULTIPLY => simple_instruction("OP_MULTIPLY", offset),
         OP_DIVIDE => simple_instruction("OP_DIVIDE", offset),
+        OP_NOT => simple_instruction("OP_NOT", offset),
         OP_NEGATE => simple_instruction("OP_NEGATE", offset),
         OP_RETURN => simple_instruction("OP_RETURN", offset),
         unknown_opcode => {

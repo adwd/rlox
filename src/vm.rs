@@ -5,7 +5,7 @@ use crate::{
     },
     compiler::compile,
     debug::disassemble_instruction,
-    value::{print_value, Value},
+    value::{print_value, Value, ValueType},
 };
 
 #[derive(Debug)]
@@ -13,6 +13,7 @@ pub struct VM {
     chunk: Chunk,
     ip: usize,
     stack: Vec<Value>,
+    stack_: Vec<Value>,
 }
 
 pub enum InterpretResult {
@@ -27,7 +28,12 @@ impl VM {
             chunk,
             ip: 0,
             stack: vec![],
+            stack_: vec![],
         }
+    }
+
+    fn reset_stack(&mut self) {
+        self.stack = self.stack_.clone();
     }
 
     pub fn interpret(&mut self, source: String) -> InterpretResult {
@@ -60,18 +66,28 @@ impl VM {
             match instruction {
                 OP_CONSTANT => {
                     let value = self.read_constant();
-                    self.push(value);
                     print_value(&value);
+                    self.push(value);
                     println!();
                 }
-                OP_ADD => self.binary_op(|a, b| a + b),
-                OP_SUBTRACT => self.binary_op(|a, b| a - b),
-                OP_MULTIPLY => self.binary_op(|a, b| a * b),
-                OP_DIVIDE => self.binary_op(|a, b| a / b),
-                OP_NEGATE => {
-                    let value = -self.pop();
-                    self.push(value);
+                OP_NIL => self.push(Value::Nil),
+                OP_TRUE => self.push(Value::Boolean(true)),
+                OP_FALSE => self.push(Value::Boolean(false)),
+                OP_ADD => self.binary_op(ValueType::Number, |a, b| a + b),
+                OP_SUBTRACT => self.binary_op(ValueType::Number, |a, b| a - b),
+                OP_MULTIPLY => self.binary_op(ValueType::Number, |a, b| a * b),
+                OP_DIVIDE => self.binary_op(ValueType::Number, |a, b| a / b),
+                OP_NOT => {
+                    let value = self.pop();
+                    self.push(Value::Boolean(Self::is_falsy(&value)));
                 }
+                OP_NEGATE => match self.peek(0) {
+                    Value::Number(n) => self.push(Value::Number(-n)),
+                    _ => {
+                        self.runtime_error("Operand must be a number.");
+                        return InterpretResult::RuntimeError;
+                    }
+                },
                 OP_RETURN => {
                     print_value(&self.pop());
                     println!();
@@ -107,9 +123,42 @@ impl VM {
         self.stack.pop().unwrap()
     }
 
-    fn binary_op(&mut self, op: impl FnOnce(Value, Value) -> Value) {
-        let b = self.pop();
-        let a = self.pop();
-        self.push(op(a, b));
+    fn peek(&self, distance: usize) -> Value {
+        self.stack[self.stack.len() - 1 - distance]
+    }
+
+    fn is_falsy(value: &Value) -> bool {
+        match value {
+            Value::Nil => true,
+            Value::Boolean(b) => !b,
+            _ => false,
+        }
+    }
+
+    fn binary_op(&mut self, value_type: ValueType, op: impl FnOnce(f64, f64) -> f64) {
+        match (self.peek(0), self.peek(1)) {
+            (Value::Number(_), Value::Number(_)) => {
+                let b = self.pop();
+                let a = self.pop();
+                match (a, b) {
+                    (Value::Number(a), Value::Number(b)) => self.push(Value::Number(op(a, b))),
+                    _ => unreachable!(),
+                }
+            }
+            _ => {
+                self.runtime_error("Operands must be numbers.");
+                return;
+            }
+        }
+    }
+
+    fn runtime_error(&mut self, message: &str) {
+        eprintln!("{}", message);
+
+        let instruction = self.ip - 1;
+        let line = self.chunk.lines[instruction] as usize;
+        eprintln!("[line {}] in script", line);
+
+        self.reset_stack();
     }
 }

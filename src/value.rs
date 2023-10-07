@@ -1,4 +1,15 @@
-pub type Value = f64;
+pub enum ValueType {
+    Bool,
+    Nil,
+    Number,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Value {
+    Nil,
+    Boolean(bool),
+    Number(f64),
+}
 
 #[derive(Debug)]
 pub struct ValueArray {
@@ -16,5 +27,9 @@ impl ValueArray {
 }
 
 pub fn print_value(value: &Value) {
-    print!("{}", value);
+    match value {
+        Value::Boolean(b) => print!("{}", b),
+        Value::Number(n) => print!("{}", n),
+        Value::Nil => print!("nil"),
+    }
 }
