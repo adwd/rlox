@@ -24,6 +24,37 @@ struct ParseRule {
     precedence: Precedence,
 }
 
+macro_rules! rule {
+    (None, None, $precedence:ident) => {
+        ParseRule {
+            prefix: None,
+            infix: None,
+            precedence: Precedence::$precedence,
+        }
+    };
+    ($prefix:ident, None, $precedence:ident) => {
+        ParseRule {
+            prefix: Some(parse_fn::$prefix),
+            infix: None,
+            precedence: Precedence::$precedence,
+        }
+    };
+    (None, $infix:ident, $precedence:ident) => {
+        ParseRule {
+            prefix: None,
+            infix: Some(parse_fn::$infix),
+            precedence: Precedence::$precedence,
+        }
+    };
+    ($prefix:ident, $infix:ident, $precedence:ident) => {
+        ParseRule {
+            prefix: Some(parse_fn::$prefix),
+            infix: Some(parse_fn::$infix),
+            precedence: Precedence::$precedence,
+        }
+    };
+}
+
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, PartialOrd, Sequence)]
 enum Precedence {
@@ -208,50 +239,46 @@ impl Compiler {
 
     fn get_rule(&mut self, t: TokenType) -> ParseRule {
         match t {
-            TokenType::LeftParen => pr(Some(parse_fn::grouping), None, Precedence::None),
-            TokenType::RightParen => pr(None, None, Precedence::None),
-            TokenType::LeftBrace => pr(None, None, Precedence::None),
-            TokenType::RightBrace => pr(None, None, Precedence::None),
-            TokenType::Comma => pr(None, None, Precedence::None),
-            TokenType::Dot => pr(None, None, Precedence::None),
-            TokenType::Minus => pr(
-                Some(parse_fn::unary),
-                Some(parse_fn::binary),
-                Precedence::Term,
-            ),
-            TokenType::Plus => pr(None, Some(parse_fn::binary), Precedence::Term),
-            TokenType::Semicolon => pr(None, None, Precedence::None),
-            TokenType::Slash => pr(None, Some(parse_fn::binary), Precedence::Factor),
-            TokenType::Star => pr(None, Some(parse_fn::binary), Precedence::Factor),
-            TokenType::Bang => pr(Some(parse_fn::unary), None, Precedence::None),
-            TokenType::BangEqual => pr(None, None, Precedence::None),
-            TokenType::Equal => pr(None, None, Precedence::None),
-            TokenType::EqualEqual => pr(None, None, Precedence::None),
-            TokenType::Greater => pr(None, None, Precedence::None),
-            TokenType::GreaterEqual => pr(None, None, Precedence::None),
-            TokenType::Less => pr(None, None, Precedence::None),
-            TokenType::LessEqual => pr(None, None, Precedence::None),
-            TokenType::Identifier => pr(None, None, Precedence::None),
-            TokenType::String => pr(None, None, Precedence::None),
-            TokenType::Number => pr(Some(parse_fn::number), None, Precedence::None),
-            TokenType::And => pr(None, None, Precedence::None),
-            TokenType::Class => pr(None, None, Precedence::None),
-            TokenType::Else => pr(None, None, Precedence::None),
-            TokenType::False => pr(Some(parse_fn::literal), None, Precedence::None),
-            TokenType::For => pr(None, None, Precedence::None),
-            TokenType::Fun => pr(None, None, Precedence::None),
-            TokenType::If => pr(None, None, Precedence::None),
-            TokenType::Nil => pr(Some(parse_fn::literal), None, Precedence::None),
-            TokenType::Or => pr(None, None, Precedence::None),
-            TokenType::Print => pr(None, None, Precedence::None),
-            TokenType::Return => pr(None, None, Precedence::None),
-            TokenType::Super => pr(None, None, Precedence::None),
-            TokenType::This => pr(None, None, Precedence::None),
-            TokenType::True => pr(Some(parse_fn::literal), None, Precedence::None),
-            TokenType::Var => pr(None, None, Precedence::None),
-            TokenType::While => pr(None, None, Precedence::None),
-            TokenType::Error => pr(None, None, Precedence::None),
-            TokenType::Eof => pr(None, None, Precedence::None),
+            TokenType::LeftParen => rule!(grouping, None, None),
+            TokenType::RightParen => rule!(None, None, None),
+            TokenType::LeftBrace => rule!(None, None, None),
+            TokenType::RightBrace => rule!(None, None, None),
+            TokenType::Comma => rule!(None, None, None),
+            TokenType::Dot => rule!(None, None, None),
+            TokenType::Minus => rule!(unary, binary, Term),
+            TokenType::Plus => rule!(None, binary, Term),
+            TokenType::Semicolon => rule!(None, None, None),
+            TokenType::Slash => rule!(None, binary, Factor),
+            TokenType::Star => rule!(None, binary, Factor),
+            TokenType::Bang => rule!(unary, None, None),
+            TokenType::BangEqual => rule!(None, None, None),
+            TokenType::Equal => rule!(None, None, None),
+            TokenType::EqualEqual => rule!(None, None, None),
+            TokenType::Greater => rule!(None, None, None),
+            TokenType::GreaterEqual => rule!(None, None, None),
+            TokenType::Less => rule!(None, None, None),
+            TokenType::LessEqual => rule!(None, None, None),
+            TokenType::Identifier => rule!(None, None, None),
+            TokenType::String => rule!(None, None, None),
+            TokenType::Number => rule!(number, None, None),
+            TokenType::And => rule!(None, None, None),
+            TokenType::Class => rule!(None, None, None),
+            TokenType::Else => rule!(None, None, None),
+            TokenType::False => rule!(literal, None, None),
+            TokenType::For => rule!(None, None, None),
+            TokenType::Fun => rule!(None, None, None),
+            TokenType::If => rule!(None, None, None),
+            TokenType::Nil => rule!(literal, None, None),
+            TokenType::Or => rule!(None, None, None),
+            TokenType::Print => rule!(None, None, None),
+            TokenType::Return => rule!(None, None, None),
+            TokenType::Super => rule!(None, None, None),
+            TokenType::This => rule!(None, None, None),
+            TokenType::True => rule!(literal, None, None),
+            TokenType::Var => rule!(None, None, None),
+            TokenType::While => rule!(None, None, None),
+            TokenType::Error => rule!(None, None, None),
+            TokenType::Eof => rule!(None, None, None),
         }
     }
 }
@@ -277,14 +304,6 @@ mod parse_fn {
 
     pub fn literal(compiler: &mut Compiler) {
         compiler.literal();
-    }
-}
-
-fn pr(prefix: Option<ParseFn>, infix: Option<ParseFn>, precedence: Precedence) -> ParseRule {
-    ParseRule {
-        prefix,
-        infix,
-        precedence,
     }
 }
 
