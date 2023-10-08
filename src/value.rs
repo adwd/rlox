@@ -33,3 +33,12 @@ pub fn print_value(value: &Value) {
         Value::Nil => print!("nil"),
     }
 }
+
+pub fn values_equal(a: &Value, b: &Value) -> bool {
+    match (a, b) {
+        (Value::Nil, Value::Nil) => true,
+        (Value::Boolean(a), Value::Boolean(b)) => a == b,
+        (Value::Number(a), Value::Number(b)) => a == b,
+        _ => false,
+    }
+}

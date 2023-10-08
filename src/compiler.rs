@@ -197,20 +197,40 @@ impl Compiler {
         let rule = self.get_rule(operator_type);
         self.parse_precedence(rule.precedence.next().unwrap());
 
+        use TokenType::*;
         match operator_type {
-            TokenType::Plus => self.emit_byte(OP_ADD as u8),
-            TokenType::Minus => self.emit_byte(OP_SUBTRACT as u8),
-            TokenType::Star => self.emit_byte(OP_MULTIPLY as u8),
-            TokenType::Slash => self.emit_byte(OP_DIVIDE as u8),
+            BangEqual => {
+                self.emit_bytes(OP_EQUAL as u8, OP_NOT as u8);
+            }
+            EqualEqual => {
+                self.emit_byte(OP_EQUAL as u8);
+            }
+            Greater => {
+                self.emit_byte(OP_GREATER as u8);
+            }
+            GreaterEqual => {
+                self.emit_bytes(OP_LESS as u8, OP_NOT as u8);
+            }
+            Less => {
+                self.emit_byte(OP_LESS as u8);
+            }
+            LessEqual => {
+                self.emit_bytes(OP_GREATER as u8, OP_NOT as u8);
+            }
+            Plus => self.emit_byte(OP_ADD as u8),
+            Minus => self.emit_byte(OP_SUBTRACT as u8),
+            Star => self.emit_byte(OP_MULTIPLY as u8),
+            Slash => self.emit_byte(OP_DIVIDE as u8),
             _ => unreachable!(),
         }
     }
 
     fn literal(&mut self) {
+        use TokenType::*;
         match self.previous.token_type {
-            TokenType::False => self.emit_byte(OP_FALSE as u8),
-            TokenType::Nil => self.emit_byte(OP_NIL as u8),
-            TokenType::True => self.emit_byte(OP_TRUE as u8),
+            False => self.emit_byte(OP_FALSE as u8),
+            Nil => self.emit_byte(OP_NIL as u8),
+            True => self.emit_byte(OP_TRUE as u8),
             _ => unreachable!(),
         }
     }
@@ -252,13 +272,13 @@ impl Compiler {
             Slash => rule!(None, binary, Factor),
             Star => rule!(None, binary, Factor),
             Bang => rule!(unary, None, None),
-            BangEqual => rule!(None, None, None),
+            BangEqual => rule!(None, binary, Equality),
             Equal => rule!(None, None, None),
-            EqualEqual => rule!(None, None, None),
-            Greater => rule!(None, None, None),
-            GreaterEqual => rule!(None, None, None),
-            Less => rule!(None, None, None),
-            LessEqual => rule!(None, None, None),
+            EqualEqual => rule!(None, binary, Equality),
+            Greater => rule!(None, binary, Comparison),
+            GreaterEqual => rule!(None, binary, Comparison),
+            Less => rule!(None, binary, Comparison),
+            LessEqual => rule!(None, binary, Comparison),
             Identifier => rule!(None, None, None),
             String => rule!(None, None, None),
             Number => rule!(number, None, None),

@@ -5,7 +5,7 @@ use crate::{
     },
     compiler::compile,
     debug::disassemble_instruction,
-    value::{print_value, Value, ValueType},
+    value::{print_value, values_equal, Value},
 };
 
 #[derive(Debug)]
@@ -73,10 +73,17 @@ impl VM {
                 OP_NIL => self.push(Value::Nil),
                 OP_TRUE => self.push(Value::Boolean(true)),
                 OP_FALSE => self.push(Value::Boolean(false)),
-                OP_ADD => self.binary_op(ValueType::Number, |a, b| a + b),
-                OP_SUBTRACT => self.binary_op(ValueType::Number, |a, b| a - b),
-                OP_MULTIPLY => self.binary_op(ValueType::Number, |a, b| a * b),
-                OP_DIVIDE => self.binary_op(ValueType::Number, |a, b| a / b),
+                OP_EQUAL => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push(Value::Boolean(values_equal(&a, &b)));
+                }
+                OP_GREATER => self.binary_op(|a, b| Value::Boolean(a > b)),
+                OP_LESS => self.binary_op(|a, b| Value::Boolean(a < b)),
+                OP_ADD => self.binary_op(|a, b| Value::Number(a + b)),
+                OP_SUBTRACT => self.binary_op(|a, b| Value::Number(a - b)),
+                OP_MULTIPLY => self.binary_op(|a, b| Value::Number(a * b)),
+                OP_DIVIDE => self.binary_op(|a, b| Value::Number(a / b)),
                 OP_NOT => {
                     let value = self.pop();
                     self.push(Value::Boolean(Self::is_falsy(&value)));
@@ -135,13 +142,13 @@ impl VM {
         }
     }
 
-    fn binary_op(&mut self, value_type: ValueType, op: impl FnOnce(f64, f64) -> f64) {
+    fn binary_op(&mut self, op: impl FnOnce(f64, f64) -> Value) {
         match (self.peek(0), self.peek(1)) {
             (Value::Number(_), Value::Number(_)) => {
                 let b = self.pop();
                 let a = self.pop();
                 match (a, b) {
-                    (Value::Number(a), Value::Number(b)) => self.push(Value::Number(op(a, b))),
+                    (Value::Number(a), Value::Number(b)) => self.push(op(a, b)),
                     _ => unreachable!(),
                 }
             }
