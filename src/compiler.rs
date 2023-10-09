@@ -2,6 +2,7 @@ use std::cell::Cell;
 
 use crate::{
     chunk::{Chunk, OpCode::*},
+    object::Object,
     scanner::{Scanner, Token, TokenType},
     value::Value,
 };
@@ -245,6 +246,11 @@ impl Compiler {
         self.emit_constant(Value::Number(value));
     }
 
+    fn string(&mut self) {
+        let value = self.previous.lexeme[1..self.previous.lexeme.len() - 1].to_string();
+        self.emit_constant(Value::Object(Object::String(value)));
+    }
+
     fn unary(&mut self) {
         let operator_type = self.previous.token_type;
 
@@ -280,7 +286,7 @@ impl Compiler {
             Less => rule!(None, binary, Comparison),
             LessEqual => rule!(None, binary, Comparison),
             Identifier => rule!(None, None, None),
-            String => rule!(None, None, None),
+            String => rule!(string, None, None),
             Number => rule!(number, None, None),
             And => rule!(None, None, None),
             Class => rule!(None, None, None),
@@ -317,6 +323,10 @@ mod parse_fn {
 
     pub fn number(compiler: &mut Compiler) {
         compiler.number();
+    }
+
+    pub fn string(compiler: &mut Compiler) {
+        compiler.string();
     }
 
     pub fn unary(compiler: &mut Compiler) {

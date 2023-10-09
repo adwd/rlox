@@ -5,6 +5,7 @@ use crate::{
     },
     compiler::compile,
     debug::disassemble_instruction,
+    object::Object,
     value::{print_value, values_equal, Value},
 };
 
@@ -80,7 +81,26 @@ impl VM {
                 }
                 OP_GREATER => self.binary_op(|a, b| Value::Boolean(a > b)),
                 OP_LESS => self.binary_op(|a, b| Value::Boolean(a < b)),
-                OP_ADD => self.binary_op(|a, b| Value::Number(a + b)),
+                OP_ADD => {
+                    let peek0 = self.peek(0);
+                    let peek1 = self.peek(1);
+
+                    if let (Value::Object(Object::String(_)), Value::Object(Object::String(_))) =
+                        (&peek0, &peek1)
+                    {
+                        self.concatenate();
+                    } else if let (Value::Number(_), Value::Number(_)) = (&peek0, &peek1) {
+                        let b = self.pop();
+                        let a = self.pop();
+                        match (a, b) {
+                            (Value::Number(a), Value::Number(b)) => self.push(Value::Number(a + b)),
+                            _ => unreachable!(),
+                        }
+                    } else {
+                        self.runtime_error("Operands must be two numbers or two strings.");
+                        return InterpretResult::RuntimeError;
+                    }
+                }
                 OP_SUBTRACT => self.binary_op(|a, b| Value::Number(a - b)),
                 OP_MULTIPLY => self.binary_op(|a, b| Value::Number(a * b)),
                 OP_DIVIDE => self.binary_op(|a, b| Value::Number(a / b)),
@@ -119,7 +139,7 @@ impl VM {
 
     fn read_constant(&mut self) -> Value {
         let position = self.read_byte::<u8>();
-        self.chunk.constants.values[position as usize]
+        self.chunk.constants.values[position as usize].clone()
     }
 
     fn push(&mut self, value: Value) {
@@ -131,7 +151,7 @@ impl VM {
     }
 
     fn peek(&self, distance: usize) -> Value {
-        self.stack[self.stack.len() - 1 - distance]
+        self.stack[self.stack.len() - 1 - distance].clone()
     }
 
     fn is_falsy(value: &Value) -> bool {
@@ -139,6 +159,23 @@ impl VM {
             Value::Nil => true,
             Value::Boolean(b) => !b,
             _ => false,
+        }
+    }
+
+    fn concatenate(&mut self) {
+        let b = self.pop();
+        let a = self.pop();
+        match (a, b) {
+            (Value::Object(a), Value::Object(b)) => {
+                if let (Object::String(a), Object::String(b)) = (a, b) {
+                    let mut result = a.clone();
+                    result.push_str(&b);
+                    self.push(Value::Object(Object::String(result)));
+                } else {
+                    unreachable!();
+                }
+            }
+            _ => unreachable!(),
         }
     }
 
